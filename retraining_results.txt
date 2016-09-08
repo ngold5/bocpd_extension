@@ -1,4 +1,7 @@
-Ground truth	length of time series: 2000
+Length of time series: 2000
+Length of training set: 500
+
+Ground truth
 	   1
 	 350
 	 750
@@ -24,3 +27,42 @@ Stationary re-training
          908
         1504
         1772
+
+Second idea:
+
+Ground truth
+	   1
+	 125
+	 180
+	 270
+	 340
+	 410
+	 530
+	 710
+	 790
+	1530
+	1615
+	1720
+	1810
+	1870
+
+Non-stationary training
+           1
+         129
+         198
+         466
+         635
+         721
+         822
+        1529
+        1844
+
+Stationary re-training:
+           1
+         142
+         219
+         513
+         605
+         750
+         909
+        1620

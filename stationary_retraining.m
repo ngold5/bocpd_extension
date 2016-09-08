@@ -219,7 +219,7 @@ results_old2 = find(convertToAlert(S3, alertThold));
 
 %%
 % now to do retraining on the quiet period detected by the algorithm and then 
-% test the results running hte algorithm from the beginning
+% test the results running the algorithm from the beginning
 
 Ttrain_start4  = 825;
 Ttrain_end4 = 1325;
