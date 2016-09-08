@@ -94,12 +94,12 @@ vline(Ttrain_end1, 'r--');
 results_old = find(convertToAlert(S1, alertThold));
 
 % now we will retrain on the new quiet part and compare results
-
+%%
 % new training interval between quiet period
 Ttrain_start2 = 901;	% training set starting point
 Ttrain_end2 = 1400;		% training set ending point
 [Ytrain2, Ytest2, Y2] = stdSplit_mod(x1, Ttrain_start2, Ttrain_end2);
-
+%%
 % train new hyperparameters
 loghyperGPTS2 = GPlearn(loghyperUnits1, covfunc, (Ttrain_start2:Ttrain_end2)', Ytrain2, [1 1]', GPrestarts);
 % train different model parameters
@@ -113,14 +113,12 @@ figure;
 [h1, h2] = plotS(S2, x1);
 subplot(h1);
 ylabel('Time series');
-vline(Ttrain_start2, 'r--');
-vline(Ttrain_end2, 'r--');
+vline(Ttrain_start1, 'r--');
+vline(Ttrain_end1, 'r--');
 subplot(h2);
 ylabel('Prob. mass')
-vline(Ttrain_start2, 'r--');
-vline(Ttrain_end2, 'r--');
+vline(Ttrain_start1, 'r--');
+vline(Ttrain_end1, 'r--');
 
 results_new = find(convertToAlert(S2, alertThold));
 
-disp(results_old);
-disp(results_new);
