@@ -1,0 +1,26 @@
+Ground truth	length of time series: 2000
+	   1
+	 350
+	 750
+	 875
+	1430
+	1560
+	1700
+
+Non-stationary training
+           1
+         356
+         511
+         758
+         906
+        1510
+        1747
+
+Stationary re-training
+           1
+         356
+         512
+         767
+         908
+        1504
+        1772

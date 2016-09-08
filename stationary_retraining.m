@@ -91,6 +91,7 @@ ylabel('Prob. mass')
 vline(Ttrain_start1, 'r--');
 vline(Ttrain_end1, 'r--');
 
+% save results of change points
 results_old = find(convertToAlert(S1, alertThold));
 
 % now we will retrain on the new quiet part and compare results
@@ -120,7 +121,10 @@ ylabel('Prob. mass')
 vline(Ttrain_start2, 'r--');
 vline(Ttrain_end2, 'r--');
 
+% save results of change points
 results_new = find(convertToAlert(S2, alertThold));
 
+% print results
 disp(results_old);
 disp(results_new);
+
