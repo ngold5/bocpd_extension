@@ -214,42 +214,6 @@ ylabel('Prob. mass')
 vline(Ttrain_start3, 'r--');
 vline(Ttrain_end3, 'r--');
 
-% save change points
-results_old2 = find(convertToAlert(S3, alertThold));
+results_new2 = find(convertToAlert(S3, alertThold));
 
-%%
-% now to do retraining on the quiet period detected by the algorithm and then 
-% test the results running hte algorithm from the beginning
-
-Ttrain_start4  = 825;
-Ttrain_end4 = 1325;
-
-[Ytrain4, Ytest4, Y4] = stdSplit_mod(x2, Ttrain_start4, Ttrain_end4);
-
-% initialise training
-% train hyperparameters
-loghyperGPTS4 = GPlearn(loghyperUnits1, covfunc, (Ttrain_start4:Ttrain_end4)', Ytrain4, [1 1]', GPrestarts);
-% train/learn model parameters now
-[theta_h4, theta_m4, theta_s4] = ...
-	bocpdGPTlearn(Ytrain4, covfunc, loghyperGPTS4, [logit(1/50) 1 1]', 0, 1);
-% find runlength distribution
-[R4, S4, nlml4, Z4, predMeans4, predMed4] = bocpdGPT(Y4, covfunc, theta_m4, theta_h4, [theta_s4, 0]', 1);
-
-% plot results now
-figure;
-[h1, h2] = plotS(S4, x2);
-subplot(h1);
-ylabel('Time series');
-vline(Ttrain_start4, 'r--');
-vline(Ttrain_end4, 'r--');
-subplot(h2);
-ylabel('Prob mass');
-vline(Ttrain_start4, 'r--');
-vline(Ttrain_end4, 'r--');
-
-% save change points
-results_new2 = find(convertToAlert(S4, alertThold));
-
-% display change points
-disp(results_old2);
 disp(results_new2);
