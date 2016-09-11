@@ -66,3 +66,49 @@ Stationary re-training:
          750
          909
         1620
+
+Move beginning to end (Helen’s bet with Huaxiong)
+           1
+         752
+        1305
+        1379
+        1652
+        1736
+        1910
+
+GBM
+Ground truth:
+	   1
+	 200
+	 275
+	 360
+	 400
+	 575
+	 620
+ 	1250
+	1465
+	1600
+	1840
+
+Stationary Training
+           1
+         372
+         470
+         497
+         642
+        1145
+        1296
+        1618
+        1843
+
+Huaxiong GBM training
+           1
+         223
+         299
+         498
+         635
+        1238
+        1263
+        1490
+        1620
+        1849

@@ -22,7 +22,6 @@ T = length(t);
 % <0.9	suspect
 alertThold = 0.95;
 
-%%
 
 % time series with change point in training set (~600 points)
 x1 = zeros(T, 1);
@@ -70,6 +69,8 @@ GPrestarts = 5;
 % Fix performance with pseudorandom seeds
 randn('seed', randnSeed);	% call pseudorandoms
 rand('twister', randSeed);	% call pseudorandoms
+
+%%
 
 % initialise
 % train hyperparameters
@@ -192,7 +193,7 @@ GPrestarts = 5;
 randn('seed', randnSeed);	% call pseudorandoms
 rand('twister', randSeed);	% call pseudorandoms
 
-% initialise
+%% initialise
 % train hyperparameters
 loghyperGPTS3 = GPlearn(loghyperUnits1, covfunc, (Ttrain_start3:Ttrain_end3)', Ytrain3, [1 1]', GPrestarts);
 %
@@ -214,6 +215,221 @@ ylabel('Prob. mass')
 vline(Ttrain_start3, 'r--');
 vline(Ttrain_end3, 'r--');
 
-results_new2 = find(convertToAlert(S3, alertThold));
+% save change points
+results_old2 = find(convertToAlert(S3, alertThold));
 
+%%
+% now to do retraining on the quiet period detected by the algorithm and then 
+% test the results running the algorithm from the beginning
+
+Ttrain_start4  = 825;
+Ttrain_end4 = 1325;
+
+[Ytrain4, Ytest4, Y4] = stdSplit_mod(x2, Ttrain_start4, Ttrain_end4);
+%%
+% initialise training
+% train hyperparameters
+loghyperGPTS4 = GPlearn(loghyperUnits1, covfunc, (Ttrain_start4:Ttrain_end4)', Ytrain4, [1 1]', GPrestarts);
+% train/learn model parameters now
+[theta_h4, theta_m4, theta_s4] = ...
+	bocpdGPTlearn(Ytrain4, covfunc, loghyperGPTS4, [logit(1/50) 1 1]', 0, 1);
+% find runlength distribution
+[R4, S4, nlml4, Z4, predMeans4, predMed4] = bocpdGPT(Y4, covfunc, theta_m4, theta_h4, [theta_s4, 0]', 1);
+
+% plot results now
+figure;
+[h1, h2] = plotS(S4, x2);
+subplot(h1);
+ylabel('Time series');
+vline(Ttrain_start4, 'r--');
+vline(Ttrain_end4, 'r--');
+subplot(h2);
+ylabel('Prob mass');
+vline(Ttrain_start4, 'r--');
+vline(Ttrain_end4, 'r--');
+
+% save change points
+results_new2 = find(convertToAlert(S4, alertThold));
+
+% display change points
+disp(results_old2);
 disp(results_new2);
+
+%% Test with GBM
+
+% create time series with GBM 
+% Change points: 200, 275, 360, 400, 575, 620, 1250, 1465, 1600, 1840
+
+x3 = zeros(T, 1);
+
+x3(1) = randn;
+
+for i = 1:T
+	x3(i) = randn;
+	if (i >= 200 && i <= 275)
+		x3(i) = 1 + randn;
+	end
+	if (i >= 360 && i <= 400)
+		x3(i) = sqrt(2)*randn;
+	end
+	if (i >= 475 && i <= 620)
+		x3(i) = 2*randn;
+	end
+	if (i >= 1250 && i <= 1465)
+		x3(i) = randn - 1;
+	end
+	if (i >= 1600 && i <= 1840)
+		x3(i) = 0.25*randn;
+	end
+end
+%%
+Ttrain_start5 = 1;
+Ttrain_end5 = 500;
+[Ytrain5, Ytest5, Y5] = stdSplit_mod(x3, Ttrain_start5, Ttrain_end5);
+%%
+% initialise training
+% train hyperparameters
+loghyperGPTS5 = GPlearn(loghyperUnits1, covfunc, (Ttrain_start5:Ttrain_end5)', Ytrain5, [1 1]', GPrestarts);
+% train/learn model parameters now
+[theta_h5, theta_m5, theta_s5] = ...
+	bocpdGPTlearn(Ytrain5, covfunc, loghyperGPTS5, [logit(1/50) 1 1]', 0, 1);
+% find runlength distribution
+[R5, S5, nlml5, Z5, predMeans5, predMed5] = bocpdGPT(Y5, covfunc, theta_m5, theta_h5, [theta_s5, 0]', 1);
+
+% plot results now
+figure;
+[h1, h2] = plotS(S5, x3);
+subplot(h1);
+ylabel('Time series');
+vline(Ttrain_start5, 'r--');
+vline(Ttrain_end5, 'r--');
+subplot(h2);
+ylabel('Prob mass');
+vline(Ttrain_start5, 'r--');
+vline(Ttrain_end5, 'r--');
+
+% save change points
+results_old3 = find(convertToAlert(S5, alertThold));
+
+disp(results_old3);
+
+%% Retrain on identified stationary part
+
+Ttrain_start6 = 650;
+Ttrain_end6 = 1150;
+[Ytrain6, Ytest6, Y6] = stdSplit_mod(x3, Ttrain_start6, Ttrain_end6);
+
+% initialise training
+% train hyperparameters
+loghyperGPTS6 = GPlearn(loghyperUnits1, covfunc, (Ttrain_start6:Ttrain_end6)', Ytrain6, [1 1]', GPrestarts);
+% train/learn model parameters now
+[theta_h6, theta_m6, theta_s6] = ...
+	bocpdGPTlearn(Ytrain6, covfunc, loghyperGPTS6, [logit(1/50) 1 1]', 0, 1);
+% find runlength distribution
+[R6, S6, nlml6, Z6, predMeans6, predMed6] = bocpdGPT(Y6, covfunc, theta_m6, theta_h6, [theta_s6, 0]', 1);
+
+% plot results now
+figure;
+[h1, h2] = plotS(S6, x3);
+subplot(h1);
+ylabel('Time series');
+vline(Ttrain_start6, 'r--');
+vline(Ttrain_end6, 'r--');
+subplot(h2);
+ylabel('Prob mass');
+vline(Ttrain_start6, 'r--');
+vline(Ttrain_end6, 'r--');
+
+% save change points
+results_new3 = find(convertToAlert(S6, alertThold));
+
+disp(results_new3);
+
+%% Helen's bet with Huaxiong
+% Take time series x2 and move the beginning period to the end, and now see 
+% the results when you do this
+
+Y4_hbet_begin = Ytrain4;
+Y4_hbet_end = Y4(1:Ttrain_start4-1);
+Y4_hbet_middle = Y4(Ttrain_end4+1:end);
+Y4_hbet = [Y4_hbet_begin; Y4_hbet_middle; Y4_hbet_end];
+%%
+loghyperGPTS4_hbet = ...
+	GPlearn(loghyperUnits1, covfunc, (Ttrain_start3:Ttrain_end3+1)', Ytrain4, [1 1]', GPrestarts);
+% train/learn model parameters now
+[theta_h4_hbet, theta_m4_hbet, theta_s4_hbet] = ...
+	bocpdGPTlearn(Ytrain4, covfunc, loghyperGPTS4_hbet, [logit(1/50) 1 1]', 0, 1);
+%
+[R4_hbet, S4_hbet, Z4_hbet, predMeans4_hbet, predMed4_hbet] = ...
+	bocpdGPT(Y4_hbet, covfunc, theta_m4_hbet, theta_h4_hbet, [theta_s4_hbet, 0]', 1);
+
+% plot results now
+figure;
+[h1, h2] = plotS(S4_hbet, Y4_hbet);
+subplot(h1);
+ylabel('Time series');
+vline(Ttrain_start3, 'r--');
+vline(Ttrain_end3, 'r--');
+subplot(h2);
+ylabel('Prob mass');
+vline(Ttrain_start3, 'r--');
+vline(Ttrain_end3, 'r--');
+
+% save change points
+results_hbet = find(convertToAlert(S4_hbet, alertThold));
+
+disp(results_hbet);	
+
+%% Nathan second bet with Huaxiong: GBM perform worse (N) than GP (HH)
+% test case now with GBM predictive model rather than Guassian Process
+
+% use same training data from first GBM test case, training on nonstationary 
+% beginning of the time series
+
+% train model
+[hazard_paramsGBM, model_paramsGBM] = learn_IFM(Ytrain5, true);
+%% find run length distribution
+[R7, S7, nlml7, Z7, predMeans7] = ...
+	bocpd_sparse(hazard_paramsGBM', model_paramsGBM', Y5, 'logistic_h', 'gaussian1D', 1e-7);
+
+figure;
+[h1, h2] = plotS(S7, x3);
+subplot(h1);
+ylabel('Time series');
+vline(Ttrain_start5, 'r--');
+vline(Ttrain_end5, 'r--');
+subplot(h2);
+ylabel('Prob. Mass');
+vline(Ttrain_start5, 'r--');
+vline(Ttrain_end5, 'r--');
+
+% save change points in this case
+results_gbm_hbet = find(convertToAlert(S7, alertThold));
+
+% print results
+disp(results_gbm_hbet);
+
+%% now retrain model on quiet period 
+
+% train model
+[hazard_paramsGBM_new, model_paramsGBM_new] = learn_IFM(Ytrain6, true);
+% find run length distribution
+[R8, S8, nlml8, Z8, predMeans8] = ...
+	bocpd_sparse(hazard_paramsGBM_new', model_paramsGBM_new', Y5, 'logistic_h', 'gaussian1D', 1e-7);
+
+figure;
+[h1, h2] = plotS(S7, x3);
+subplot(h1);
+ylabel('Time series');
+vline(Ttrain_start5, 'r--');
+vline(Ttrain_end5, 'r--');
+subplot(h2);
+ylabel('Prob. Mass');
+vline(Ttrain_start5, 'r--');
+vline(Ttrain_end5, 'r--');
+
+% save change points in this case
+results_gbm_hbet = find(convertToAlert(S7, alertThold));
+
+% print results
+disp(results_gbm_hbet);
