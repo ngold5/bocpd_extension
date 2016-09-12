@@ -4,6 +4,7 @@ Length of training set: 500
 Ground truth
 	   1
 	 350
+	 500
 	 750
 	 875
 	1430
@@ -112,3 +113,4 @@ Huaxiong GBM training
         1490
         1620
         1849
+	

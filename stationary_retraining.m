@@ -140,7 +140,7 @@ disp(results_new);
 % Change points: 125, 180, 270, 340, 410, 530, 710, 790, 1530, 1615, 1720, 1810, 1870
 
 % time series
-x2 = zeros(2000, 1);
+x2 = zeros(T, 1);
 x2(1) = randn;
 x2(2) = randn;
 
@@ -169,11 +169,41 @@ for i = 2:T
 	end
 end
 
+% regenerate x2 time series in new order: quiet period first, and then changes
+% New changepoints:
+% 740, 825, 930, 1020, 1080, 1305, 1360, 1450, 1520, 1590, 1710, 1890, 1970
+x2p = zeros(T, 1);
+x2p(1) = randn;
+
+for i = 2:T
+	x2p(i) = 0.3*x2(i-1) + 0.75*randn;
+	if (i >= 740 && i <= 825)
+		x2p(i) = 0.3*x2p(i-1) - 0.75 + 0.75*randn;
+	end
+	if (i >= 930 && i <= 1020)
+		x2p(i) = 0.8*x2p(i-1) + 0.75*randn;
+	end
+	if (i >= 1305 && i <= 1360)
+		x2p(i) = 0.3*x2p(i-1) + 1.75*randn;
+	end
+	if (i >= 1450 && i <= 1520)
+		x2p(i) = 0.6*x2p(i-1) + 0.75*randn;
+	end
+	if (i >= 1590 && i <= 1710)
+		x2p(i) = 0.3*x2p(i-1) + 1 + 0.75*randn;
+	end
+	if (i >= 1890 && i <= 1970)
+		x2p(i) = 0.3*x2p(i-1) + 1.4*randn;
+	end
+end
+
 % create training set with new splitting method: stdSplit_mod
 % train initially with the beginning of the time series
 Ttrain_start3 = 1;	% training set start point
 Ttrain_end3 = 500;	% training set end point
 [Ytrain3, Ytest3, Y3] = stdSplit_mod(x2, Ttrain_start3, Ttrain_end3);
+% create training set with modified time seres
+[Ytrain3p, Ytest3p, Y3p] = stdSplit_mod(x2p, Ttrain_start3, Ttrain_end3);
 
 % load covariance functions for GPs
 covfunc = {'covSum', {'covRQiso', 'covConst', 'covNoise'}};
@@ -201,6 +231,16 @@ loghyperGPTS3 = GPlearn(loghyperUnits1, covfunc, (Ttrain_start3:Ttrain_end3)', Y
 % find run length distribution now
 [R3, S3, nlml3, Z3, predMeans3, predMed3] = bocpdGPT(Y3, covfunc, theta_m3, theta_h3, [theta_s3, 0]', 1);
 
+%% train just as above on x2p instead of x2
+% train hyperparameters
+loghyperGPTS3p = GPlearn(loghyperUnits1, covfunc, (Ttrain_start3:Ttrain_end3)', Ytrain3p, [1 1]', GPrestarts);
+%
+% train/learn model parameters
+[theta_h3p, theta_m3p, theta_s3p] = ...
+	bocpdGPTlearn(Ytrain3p, covfunc, loghyperGPTS3p, [logit(1/50) 1 1]', 0, 1);
+% find run length distribution now
+[R3p, S3p, nlml3p, Z3p, predMeans3p, predMed3p] = bocpdGPT(Y3p, covfunc, theta_m3p, theta_h3p, [theta_s3p, 0]', 1);
+%%
 % plot results
 figure;
 [h1, h2] = plotS(S3, x2);
@@ -215,6 +255,23 @@ vline(Ttrain_end3, 'r--');
 
 % save change points
 results_old2 = find(convertToAlert(S3, alertThold));
+
+%%
+% plot results for x2p
+figure;
+[h1, h2] = plotS(S3p, x2p);
+subplot(h1);
+ylabel('Time series');
+vline(Ttrain_start3, 'r--');
+vline(Ttrain_end3, 'r--');
+subplot(h2);
+ylabel('Prob. mass')
+vline(Ttrain_start3, 'r--');
+vline(Ttrain_end3, 'r--');
+
+% save change points
+results_x2p = find(convertToAlert(S3p, alertThold));
+disp(results_x2p);
 
 %%
 % now to do retraining on the quiet period detected by the algorithm and then 
@@ -342,6 +399,41 @@ vline(Ttrain_end6, 'r--');
 results_new3 = find(convertToAlert(S6, alertThold));
 
 disp(results_new3);
+
+%% Move stationary part to the end of the time series for GBM and retrain
+% on the beginning
+
+Y6_hbet_begin = Ytrain6;
+Y6_hbet_end = Y6(1:Ttrain_start6-1);
+Y6_hbet_middle = Y6(Ttrain_end6+1:end);
+Y6_hbet = [Y6_hbet_begin; Y6_hbet_middle; Y6_hbet_end];
+
+%% GBM
+loghyperGPTS6_hbet = ...
+	GPlearn(loghyperUnits1, covfunc, (Ttrain_start5:Ttrain_end5+1)', Ytrain6, [1 1]', GPrestarts);
+% train/learn model parameters now
+[theta_h6_hbet, theta_m6_hbet, theta_s6_hbet] = ...
+	bocpdGPTlearn(Ytrain6, covfunc, loghyperGPTS6_hbet, [logit(1/50) 1 1]', 0, 1);
+%
+[R6_hbet, S6_hbet, Z6_hbet, predMeans6_hbet, predMed6_hbet] = ...
+	bocpdGPT(Y6_hbet, covfunc, theta_m6_hbet, theta_h6_hbet, [theta_s6_hbet, 0]', 1);
+
+% plot results now
+figure;
+[h1, h2] = plotS(S6_hbet, Y6_hbet);
+subplot(h1);
+ylabel('Time series');
+vline(Ttrain_start5, 'r--');
+vline(Ttrain_end5, 'r--');
+subplot(h2);
+ylabel('Prob mass');
+vline(Ttrain_start5, 'r--');
+vline(Ttrain_end5, 'r--');
+
+% save change points
+results_hbet_gbm6 = find(convertToAlert(S6_hbet, alertThold));
+
+disp(results_hbet_gbm6);	
 
 %% Helen's bet with Huaxiong
 % Take time series x2 and move the beginning period to the end, and now see 
